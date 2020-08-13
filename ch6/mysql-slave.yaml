@@ -1,35 +1,35 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mysql-master
+  name: mysql-slave
   labels:
-    app: mysql-master
+    app: mysql-slave
 spec:
   ports:
   - port: 3306
     name: mysql
   clusterIP: None
   selector:
-    app: mysql-master # 이 이름의 POD를 찾겠다
+    app: mysql-slave # 이 이름의 POD를 찾겠다
 
 ---
 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mysql-master
+  name: mysql-slave
   labels:
-    app: mysql-master
+    app: mysql-slave
 spec:
-  serviceName: "mysql-master"
+  serviceName: "mysql-slave"
   selector:
     matchLabels:
-      app: mysql-master
-  replicas: 1
+      app: mysql-slave
+  replicas: 2
   template: # Pod Template
     metadata:
       labels: 
-        app: mysql-master
+        app: mysql-slave
     spec:
       terminationGracePeriodSeconds: 60 # POD를 삭제할 때 기다려주는 시간(초)
       containers:
@@ -41,6 +41,8 @@ spec:
         ports:
         - containerPort: 3306
         env:
+        - name: MYSQL_MASTER_HOST
+          value: "mysql-master"
         - name: MYSQL_ROOT_PASSWORD
           value: "gihyo"
         - name: MYSQL_DATABASE
@@ -49,6 +51,10 @@ spec:
           value: "gihyo"
         - name: MYSQL_MASTER
           value: "true"
+        - name: MYSQL_REPL_USER
+          value: "repl"
+        - name: MYSQL_REPL_PASSWORD
+          value: "gihyo"
         volumeMounts:
         - name: mysql-data
           mountPath: /var/lib/mysql
