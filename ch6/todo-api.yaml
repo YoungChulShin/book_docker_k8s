@@ -1,4 +1,4 @@
-apiVerion: v1
+apiVersion: v1
 kind: Service
 metadata:
     name: todoapi
@@ -12,7 +12,6 @@ spec:
           port: 80
 
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,3 +26,32 @@ spec:
     template:
         metadata:
             labels:
+                app: todoapi
+        spec:
+            containers:
+            - name: nginx
+              image: gihyodocker/nginx:latest
+              imagePullPolicy: Always
+              ports:
+              - containerPort: 80
+              env:
+              - name: WORKER_PROCESSES
+                value: "2"
+              - name: WORKER_CONNECTIONS
+                value: "1024"
+              - name: LOG_STDOUT
+                value: "true"
+              - name: BACKEND_HOST
+                value: "localhost:8080"
+            - name: api
+              image: gihyodocker/todoapi:latest
+              imagePullPolicy: Always
+              ports:
+              - containerPort: 8080
+              env:
+              - name: TODO_BIND
+                value: ":8080"
+              - name: TODO_MASTER_URL
+                value: "kubia:kubia@tcp(mysql-master:3306)/tododb?parseTime=true"
+              - name: TODO_MASTER_URL
+                value: "kubia:kubia@tcp(mysql-slave:3306)/tododb?parseTime=true"
